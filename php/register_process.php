@@ -1,5 +1,7 @@
 <?php
-require_once('..\config\db_connect.php');
+require_once('../config/db_connect.php');
+
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
@@ -14,10 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_passport = trim($_POST['id_passport']);
     $dob = $_POST['dob'];
 
-    // Save old values
     $old = compact('fullname', 'email', 'phone', 'address', 'country', 'id_passport', 'dob');
 
-    // Validation
     if (empty($fullname) || !preg_match("/^[a-zA-Z\s]+$/", $fullname)) {
         $errors['fullname'] = "Name must only contain letters and spaces.";
     }
@@ -50,17 +50,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['dob'] = "Date of birth is required.";
     }
 
+    if (strtotime($dob) > time()) {
+        $errors['dob'] = "Date of birth cannot be in the future.";
+    }
+
     if (!empty($errors)) {
-        header('Location: ../views/register.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
+        $old = compact('fullname', 'email', 'phone', 'address', 'country', 'id_passport', 'dob');
+        header('Location: ../pages/register.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
         exit();
     }
 
-    // All good — save user
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
     try {
+
+        $stmt = $conn->prepare("SELECT id FROM customers WHERE email = :email");
+        $stmt->execute(['email' => $email]);
+        if ($stmt->fetch()) {
+            $errors['email'] = "Email is already registered.";
+            header('Location: ../pages/register.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
+            exit();
+        }
+
         $stmt = $conn->prepare("INSERT INTO customers (full_name, email, password, phone, address, country, id_passport, dob) 
-                               VALUES (:fullname, :email, :password, :phone, :address, :country, :id_passport, :dob)");
+                                VALUES (:fullname, :email, :password, :phone, :address, :country, :id_passport, :dob)");
+
         $stmt->execute([
             'fullname' => $fullname,
             'email' => $email,
@@ -71,10 +85,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'id_passport' => $id_passport,
             'dob' => $dob
         ]);
-        header('Location: ../pages/login.php?success=registered');
+
+        $_SESSION['success'] = "Registration successful. Please login.";
+        // $_SESSION['customer_id'] = $conn->lastInsertId();
+        $_SESSION['customer_name'] = $fullname;
+        header('Location: ../pages/login.php');
         exit();
     } catch (PDOException $e) {
-        echo "Registration failed: " . $e->getMessage();
+        $errors['general'] = "Registration error. Please try again.";
+        header('Location: ../pages/register.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
+        exit();
     }
 } else {
     header('Location: ../pages/register.php');

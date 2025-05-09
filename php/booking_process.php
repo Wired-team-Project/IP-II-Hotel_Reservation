@@ -1,10 +1,8 @@
 <?php
-session_start();
 include_once('../config/db_connect.php');
-
+session_start();
 
 if (!isset($_SESSION['customer_id'])) {
-    
     header('Location: ../pages/login.php');
     exit();
 }
@@ -18,7 +16,6 @@ $booking = $_SESSION['booking_info'];
 $room_id = (int)$_POST['room_id'];
 $customer_id = $_SESSION['customer_id'];
 
-
 $checkin_date = $booking['checkin_date'];
 $checkout_date = $booking['checkout_date'];
 $adults = $booking['adults'];
@@ -27,7 +24,7 @@ $booking_date = date('Y-m-d');
 $status = 'confirmed';
 
 try {
-   
+
     $stmt = $conn->prepare("
         INSERT INTO bookings (customer_id, room_id, checkin_date, checkout_date, adults, children, booking_date, status)
         VALUES (:customer_id, :room_id, :checkin_date, :checkout_date, :adults, :children, :booking_date, :status)
@@ -43,13 +40,11 @@ try {
         ':status' => $status
     ]);
 
-   
     $updateRoom = $conn->prepare("UPDATE rooms SET status = 'booked' WHERE id = :room_id");
     $updateRoom->execute([':room_id' => $room_id]);
 
     unset($_SESSION['booking_info']);
 
-   
     header('Location: ../pages/booking_success.php');
     exit();
 

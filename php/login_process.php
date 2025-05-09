@@ -1,17 +1,16 @@
 <?php
-require_once('..\config\db_connect.php');
+require_once('../config/db_connect.php');
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
-    $old = [];
+    $values = [];
 
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $old = ['email' => $email];
+    $values = ['email' => $email];
 
-    // Validation
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = "Please enter a valid email address.";
     }
@@ -21,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($errors)) {
-        header('Location: ../views/login.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
+        header('Location: ../pages/login.php?errors=' . urlencode(json_encode($errors)) . '&values=' . urlencode(json_encode($values)));
         exit();
     }
 
@@ -36,22 +35,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['customer_id'] = $user['id'];
             $_SESSION['customer_name'] = $user['fullname'];
 
-            header('Location: ../pages/booking_success.php');
+            header('Location: ../pages/booking.php');// chnaged from available_rooms to booking
             exit();
         } else {
             // Wrong credentials
             $errors['general'] = "Invalid email or password.";
-            header('Location: ../pages/login.php?errors=' . urlencode(json_encode($errors)) . '&old=' . urlencode(json_encode($old)));
+            header('Location: ../pages/login.php?errors=' . urlencode(json_encode($errors)) . '&values=' . urlencode(json_encode($values)));
             exit();
         }
 
     } catch (PDOException $e) {
-        echo "Login failed: " . $e->getMessage();
+         $errors['general'] = "Login error. Please try again.";
+        header('Location: ../pages/login.php?errors=' . urlencode(json_encode($errors)) . '&values=' . urlencode(json_encode($values)));
     }
 
 } else {
-    header('Location: ../views/login.php');
+    header('Location: ../pages/login.php');
     exit();
 }
 ?>
-

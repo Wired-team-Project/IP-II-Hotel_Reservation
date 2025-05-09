@@ -1,6 +1,23 @@
 <?php
 include '../partials/header.php';
 
+$errors = [];
+$values = ['email' => ''];
+
+if (isset($_GET['errors'])) {
+    $decodedErrors = json_decode($_GET['errors'], true);
+    if (is_array($decodedErrors)) {
+        $errors = $decodedErrors;
+    }
+}
+
+if (isset($_GET['values'])) {
+    $decodedValues = json_decode($_GET['values'], true);
+    if (is_array($decodedValues)) {
+        $values = array_merge($values, $decodedValues);
+    }
+}
+
 // Collect data from POST if user came from 'available_rooms.php'
 $selected_room = $_POST['selected_room'] ?? '';
 $checkin_date = $_POST['checkin_date'] ?? '';
@@ -21,15 +38,23 @@ $children = $_POST['children'] ?? '';
             <input type="hidden" name="adults" value="<?php echo htmlspecialchars($adults); ?>">
             <input type="hidden" name="children" value="<?php echo htmlspecialchars($children); ?>">
 
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" required>
-            </div>
+            <label>Email:</label>
+            <input type="email" name="email" required value="<?= htmlspecialchars($values['email']) ?>">
+            <?php if (isset($errors['email'])): ?>
+                <div class="error" style="color: red;"><?= htmlspecialchars($errors['email']) ?></div>
+            <?php endif; ?>
 
             <div class="form-group">
                 <label>Password:</label>
                 <input type="password" name="password" required>
+                <?php if (isset($errors['password'])): ?>
+                    <div class="error" style="color: red;"><?= htmlspecialchars($errors['password']) ?></div>
+                <?php endif; ?>
             </div>
+
+            <?php if (isset($errors['general'])): ?>
+                <div class="error" style="color: red; margin-bottom: 10px;"><?= htmlspecialchars($errors['general']) ?></div>
+            <?php endif; ?>
 
             <button type="submit" class="btn">Login</button>
         </form>

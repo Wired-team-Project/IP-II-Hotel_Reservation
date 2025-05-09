@@ -1,23 +1,22 @@
 <?php 
 include('../partials/header.php'); 
 include('../config/db_connect.php');
+
 session_start();
 
-// Check if booking info exists in session
 if (!isset($_SESSION['booking_info'])) {
-    header('Location: ../pages/booking.php');
+    header('Location: booking.php');
     exit();
 }
 
 if (!isset($_SESSION['customer_id'])) {
-    // Redirect to login if not logged in
-    header('Location: ../pages/login.php');
+    header('Location: login.php');
     exit();
 }
 
 $booking = $_SESSION['booking_info'];
 
-// Fetch available rooms
+
 try {
     $sql = "SELECT * FROM rooms WHERE status = 'available'";
     $stmt = $conn->query($sql);
